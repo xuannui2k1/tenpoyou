@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>追加注文入力</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Hiragino Sans','Yu Gothic UI',sans-serif;background:#f0f4f9;color:#1a2a3a;min-height:100vh}
+header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;padding:16px 18px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(26,58,92,.3)}
+header h1{font-size:18px;font-weight:700}
+header p{font-size:11px;opacity:.6;margin-top:3px}
+.screen{padding:14px;display:flex;flex-direction:column;gap:12px;max-width:600px;margin:0 auto}
+.sec{background:white;border-radius:14px;border:1.5px solid #e4eaf4;overflow:hidden;box-shadow:0 1px 8px rgba(26,58,92,.06)}
+.sec-head{padding:12px 16px;background:#f7f9fc;border-bottom:1px solid #eaeef4;font-size:12px;font-weight:700;color:#5a7a9a;letter-spacing:.5px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.store-select-wrap{padding:12px}
+.store-select{width:100%;padding:12px 16px;border:1.5px solid #e4eaf4;border-radius:10px;font-size:15px;font-family:inherit;color:#1a2a3a;background:#fafbfd;appearance:none;-webkit-appearance:none;cursor:pointer;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231a3a5c' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.store-select:focus{outline:none;border-color:#1a3a5c}
+.search-wrap{padding:12px}
+.search-box{display:flex;align-items:center;gap:8px;background:#f7f9fc;border:1.5px solid #e4eaf4;border-radius:10px;padding:10px 14px;transition:border-color .2s}
+.search-box:focus-within{border-color:#1a3a5c;background:white}
+.search-box input{flex:1;border:none;outline:none;font-size:15px;font-family:inherit;background:transparent;color:#1a2a3a}
+.search-box input::placeholder{color:#b0c4d4}
+.results{padding:0 12px 12px;display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto}
+.result-item{padding:10px 14px;background:#f7f9fc;border:1.5px solid #e4eaf4;border-radius:9px;cursor:pointer;font-size:14px;font-weight:600;color:#1a3a5c}
+.result-item:active{background:#dce9f8}
+.result-item.selected{background:#eef3fb;border-color:#1a3a5c}
+.sel-info{padding:10px 16px;background:#eef3fb;border-bottom:1px solid #d8e8f4;font-size:13px;font-weight:700;color:#1a3a5c}
+.input-body{padding:14px}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10px;color:#7a9ab8;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.field input{padding:10px 12px;border:1.5px solid #e4eaf4;border-radius:9px;font-size:18px;font-family:inherit;color:#1a2a3a;font-weight:700;background:#fafbfd;text-align:right}
+.field input:focus{outline:none;border-color:#1a3a5c;background:white}
+.field.full{grid-column:1/-1}
+.field.full input{font-size:14px;text-align:left}
+.field select{padding:10px 12px;border:1.5px solid #e4eaf4;border-radius:9px;font-size:16px;font-family:inherit;color:#1a2a3a;font-weight:700;background:#fafbfd;appearance:none;-webkit-appearance:none;width:100%;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231a3a5c' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.btn-add-cart{width:100%;padding:13px;background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn-add-cart:active{opacity:.88}
+/* Cart */
+.cart-item{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f0f4f9}
+.cart-item:last-child{border-bottom:none}
+.cart-del{background:none;border:none;font-size:18px;cursor:pointer;color:#dde4f0;padding:4px;line-height:1;flex-shrink:0}
+.cart-del:active{color:#ef4444}
+.btn-confirm{width:100%;padding:16px;background:linear-gradient(135deg,#c62828,#e53935);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(198,40,40,.25)}
+.btn-confirm:active{opacity:.88}
+.btn-confirm:disabled{opacity:.5}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:white;border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:600px;max-height:80vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;color:#1a3a5c;margin-bottom:4px}
+.modal-sub{font-size:12px;color:#7a9ab8;margin-bottom:16px}
+.modal-list{background:#f7f9fc;border-radius:10px;margin-bottom:16px;overflow:hidden}
+.modal-row{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid #eaeef4}
+.modal-row:last-child{border-bottom:none}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-cancel-modal{padding:13px;background:#f0f4f9;color:#5a7a9a;border:1.5px solid #e4eaf4;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn-ok-modal{padding:13px;background:linear-gradient(135deg,#c62828,#e53935);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn-ok-modal:disabled{opacity:.5}
+/* History */
+.hist-list{padding:10px 12px;display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto}
+.hist-item{background:#f7f9fc;border:1.5px solid #e4eaf4;border-radius:9px;padding:10px 13px}
+.hist-badge{display:inline-block;background:#eef3fb;color:#1a3a5c;font-size:10px;font-weight:700;border-radius:5px;padding:2px 7px;margin-bottom:6px}
+.hist-row{display:flex;justify-content:space-between;font-size:13px;color:#1a3a5c;margin-bottom:2px}
+.hist-time{font-size:10px;color:#b0c4d4;margin-top:4px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a3a5c;color:white;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📝 追加注文入力</h1>
+  <p>手動で注文を追加します</p>
+</header>
+
+<div class="screen">
+
+  <!-- ① 店舗選択 -->
+  <div class="sec">
+    <div class="sec-head">① 店舗を選択</div>
+    <div class="store-select-wrap">
+      <select class="store-select" id="store-select" onchange="onStoreChange(this)">
+        <option value="">-- 店舗を選んでください --</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ② 魚種検索 -->
+  <div class="sec">
+    <div class="sec-head">② 魚種を検索</div>
+    <div class="search-wrap">
+      <div class="search-box">
+        <span style="font-size:16px">🔍</span>
+        <input type="search" id="fish-search" placeholder="魚名を入力（例: sawara / サワラ）" oninput="searchFish(this.value)" autocomplete="off">
+      </div>
+    </div>
+    <div id="fish-load-status" style="padding:4px 14px 8px;font-size:12px;color:#aaa">読み込み中...</div>
+    <div class="results" id="fish-results"></div>
+  </div>
+
+  <!-- ③ 数量・単位 -->
+  <div class="sec" id="input-sec" style="display:none">
+    <div class="sel-info" id="sel-info">-</div>
+    <div class="input-body">
+      <div class="input-row">
+        <div class="field">
+          <label>数量</label>
+          <input type="number" id="add-qty" inputmode="decimal" placeholder="0">
+        </div>
+        <div class="field">
+          <label>単位</label>
+          <select id="add-unit">
+            <option value="">-- 選択 --</option>
+            <option value="kg">kg</option>
+            <option value="本">本</option>
+            <option value="PC">PC</option>
+            <option value="枚">枚</option>
+            <option value="箱">箱</option>
+            <option value="束">束</option>
+            <option value="杯">杯</option>
+            <option value="尾">尾</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>コメント（任意）</label>
+          <input type="text" id="add-comment" placeholder="例: 小さいサイズでお願いします">
+        </div>
+      </div>
+      <button class="btn-add-cart" onclick="addToCart()">＋ リストに追加</button>
+    </div>
+  </div>
+
+  <!-- ④ 注文リスト -->
+  <div class="sec" id="cart-sec" style="display:none">
+    <div class="sec-head">
+      <span>🛒 注文リスト</span>
+      <span id="cart-count" style="background:#1a3a5c;color:white;border-radius:20px;padding:2px 10px;font-size:12px">0件</span>
+    </div>
+    <div id="cart-list"></div>
+    <div style="padding:14px">
+      <button class="btn-confirm" onclick="openConfirm()">確認、注文をする</button>
+    </div>
+  </div>
+
+  <!-- 履歴 -->
+  <div class="sec" id="hist-sec" style="display:none">
+    <div class="sec-head">
+      <span>📋 注文履歴</span>
+      <button onclick="clearHistory()" style="font-size:11px;color:#c62828;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">🗑 全削除</button>
+    </div>
+    <div class="hist-list" id="hist-list"></div>
+  </div>
+
+</div>
+
+<!-- 確認モーダル -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box">
+    <div class="modal-title">📋 注文内容の確認</div>
+    <div class="modal-sub" id="modal-store-label">-</div>
+    <div class="modal-list" id="modal-list"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel-modal" onclick="closeConfirm()">キャンセル</button>
+      <button class="btn-ok-modal" id="modal-ok-btn" onclick="submitOrder()">📤 注文確定</button>
+    </div>
+    <div id="modal-msg" style="text-align:center;font-size:12px;margin-top:10px;font-weight:600"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var GAS_URL  = 'https://script.google.com/macros/s/AKfycbwn0OmNmwvfoOrI5-kcMnLTeQxvbg1yOk-iFyrHXuW17pmz3b2C4Pt5MkxLslYAkxJn8Q/exec';
+var SHEET_ID = '1D1b7d6MKMO1dXkYJvDlJKPZq7Gt3zQrjFAzp7ro22Uw';
+
+var STORES = [
+  {code:2,name:'大晴海'},{code:3,name:'海の路'},{code:4,name:'板付製造'},
+  {code:5,name:'魚蔵'},{code:6,name:'どげん海'},{code:7,name:'板付鮮魚'},
+  {code:8,name:'萬漁箱'},{code:9,name:'せんせんせん'},{code:10,name:'一承'},
+  {code:11,name:'山尾天神'},{code:12,name:'山尾博多'},{code:13,name:'山尾西新'},
+  {code:14,name:'魚屋'},{code:15,name:'藤う那天神'},{code:16,name:'一承東京'},
+  {code:17,name:'フタクチ'},{code:18,name:'野が海'},{code:20,name:'又'},
+  {code:21,name:'飛うお'},{code:22,name:'とりとりと'},{code:30,name:'藤う那博多'}
+];
+
+var FISH_NAMES=[], selectedStore=null, selectedFish=null, cart=[];
+
+var ROMAJI_MAP=[['shi','し'],['chi','ち'],['tsu','つ'],['sha','しゃ'],['shu','しゅ'],['sho','しょ'],
+  ['cha','ちゃ'],['chu','ちゅ'],['cho','ちょ'],['ka','か'],['ki','き'],['ku','く'],['ke','け'],['ko','こ'],
+  ['sa','さ'],['si','し'],['su','す'],['se','せ'],['so','そ'],['ta','た'],['te','て'],['to','と'],
+  ['na','な'],['ni','に'],['nu','ぬ'],['ne','ね'],['no','の'],['ha','は'],['hi','ひ'],['fu','ふ'],['he','へ'],['ho','ほ'],
+  ['ma','ま'],['mi','み'],['mu','む'],['me','め'],['mo','も'],['ya','や'],['yu','ゆ'],['yo','よ'],
+  ['ra','ら'],['ri','り'],['ru','る'],['re','れ'],['ro','ろ'],['wa','わ'],['wo','を'],
+  ['ga','が'],['gi','ぎ'],['gu','ぐ'],['ge','げ'],['go','ご'],['za','ざ'],['zu','ず'],['ze','ぜ'],['zo','ぞ'],
+  ['da','だ'],['de','で'],['do','ど'],['ba','ば'],['bi','び'],['bu','ぶ'],['be','べ'],['bo','ぼ'],
+  ['pa','ぱ'],['pi','ぴ'],['pu','ぷ'],['pe','ぺ'],['po','ぽ'],
+  ['a','あ'],['i','い'],['u','う'],['e','え'],['o','お'],['n','ん']];
+// ── Kanji → Hiragana reading map (魚名によく使う漢字) ──
+var KANJI_YOMI = [
+  ['小鯛','こだい'],['白魚','しらうお'],['真子','まこ'],['身欠き','みがき'],
+  ['活','かつ'],['締り','しまり'],['天然','てんねん'],['冷凍','れいとう'],
+  ['煮付け','につけ'],['殻付き','からつき'],['姫','ひめ'],['桜','さくら'],
+  ['銀浪','ぎんなみ'],['丸天','まるてん'],['鯛','たい'],['鯖','さば'],
+  ['鰯','いわし'],['鰺','あじ'],['鱧','はも'],['鮭','さけ'],['鱒','ます'],
+  ['蛸','たこ'],['烏賊','いか'],['蟹','かに'],['海老','えび'],
+  ['牡蠣','かき'],['帆立','ほたて'],['蛤','はまぐり'],['浅蜊','あさり'],
+  ['若','わか'],['共','とも'],['市','いち'],['板','いた'],['梅','うめ'],
+  ['立','りつ'],['大','だい'],['小','しょう'],['生','なま'],['黒','くろ'],
+  ['豆腐','とうふ'],['蒲鉾','かまぼこ'],['揚','あげ'],['煮','に'],
+  ['対馬','つしま'],['天神','てんじん'],['博多','はかた']
+];
+
+function kanjiToHira(name) {
+  var result = name;
+  KANJI_YOMI.forEach(function(pair){ result = result.split(pair[0]).join(pair[1]); });
+  return result;
+}
+
+async function init(){
+  renderStoreDropdown(); renderHistory();
+  var st=document.getElementById('fish-load-status');
+  try{
+    var res=await fetch(GAS_URL+'?action=getMaster');
+    var j=await res.json();
+    if(j.success&&j.fishNames){FISH_NAMES=j.fishNames;st.textContent=FISH_NAMES.length+'種類の魚が検索可能です';}
+    else{st.textContent='エラー: '+(j.error||'不明');}
+  }catch(e){st.textContent='通信エラー — リロードしてください';}
+}
+
+function renderStoreDropdown(){
+  var sel=document.getElementById('store-select');
+  STORES.forEach(function(s){var o=document.createElement('option');o.value=s.code;o.textContent=s.code+'　'+s.name;sel.appendChild(o);});
+}
+
+function onStoreChange(sel){
+  var code=parseInt(sel.value);
+  selectedStore=STORES.filter(function(s){return s.code===code;})[0]||null;
+  updateInputSec();
+}
+
+function searchFish(q){
+  var el=document.getElementById('fish-results'),raw=q.trim();
+  if(!raw){el.innerHTML='';return;}
+  var ql=raw.toLowerCase(), qH=romaToHira(ql);
+  var m=FISH_NAMES.filter(function(n){
+    var nl  = n.toLowerCase();
+    var nh  = toHira(nl);               // カタカナ→ひらがな
+    var nk  = kanjiToHira(nl);          // 漢字→ひらがな
+    var nkh = toHira(nk);               // さらにカタカナ→ひらがな
+    return nl.indexOf(ql)!==-1 ||       // 直接一致
+           nh.indexOf(qH)!==-1 ||       // カタカナ→ひらがな一致
+           nk.indexOf(qH)!==-1 ||       // 漢字読み一致
+           nkh.indexOf(qH)!==-1;        // 漢字+カタカナ→ひらがな一致
+  }).slice(0,20);
+  if(!m.length){
+    el.innerHTML='<div style="padding:8px 14px;font-size:13px;color:#aaa">該当なし</div>'+
+      '<div class="result-item" onclick="selectFish(\''+escAttr(raw)+'\')">📝 「'+esc(raw)+'」をそのまま使用</div>';
+    return;
+  }
+  el.innerHTML=m.map(function(n){
+    return '<div class="result-item'+(selectedFish===n?' selected':'')+'" onclick="selectFish(\''+escAttr(n)+'\')">'+esc(n)+'</div>';
+  }).join('');
+}
+
+function selectFish(name){
+  selectedFish=name;
+  document.getElementById('fish-search').value=name;
+  document.getElementById('fish-results').innerHTML='<div class="result-item selected">'+esc(name)+'</div>';
+  updateInputSec();
+}
+
+function updateInputSec(){
+  var sec=document.getElementById('input-sec');
+  if(selectedStore&&selectedFish){sec.style.display='block';document.getElementById('sel-info').textContent=selectedStore.code+' '+selectedStore.name+' ／ '+selectedFish;}
+  else{sec.style.display='none';}
+}
+
+function addToCart(){
+  if(!selectedStore||!selectedFish){showToast('店舗と魚種を選択してください');return;}
+  var qty=document.getElementById('add-qty').value.trim();
+  var unit=document.getElementById('add-unit').value;
+  var cmt=document.getElementById('add-comment').value.trim();
+  if(!qty){showToast('数量を入力してください');return;}
+  if(!unit){showToast('単位を選択してください');return;}
+  cart.push({store:selectedStore,fishName:selectedFish,qty:qty,unit:unit,comment:cmt});
+  renderCart();
+  document.getElementById('add-qty').value='';
+  document.getElementById('add-unit').value='';
+  document.getElementById('add-comment').value='';
+  document.getElementById('fish-search').value='';
+  document.getElementById('fish-results').innerHTML='';
+  document.getElementById('input-sec').style.display='none';
+  selectedFish=null;
+  showToast('リストに追加しました ✓');
+}
+
+function renderCart(){
+  var sec=document.getElementById('cart-sec'),el=document.getElementById('cart-list');
+  if(!cart.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  document.getElementById('cart-count').textContent=cart.length+'件';
+  el.innerHTML=cart.map(function(item,i){
+    return '<div class="cart-item">'+
+      '<button class="cart-del" onclick="removeCart('+i+')">✕</button>'+
+      '<div style="flex:1">'+
+      '<div style="font-size:14px;font-weight:700;color:#1a3a5c">'+esc(item.fishName)+'</div>'+
+      '<div style="font-size:11px;color:#7a9ab8">'+esc(item.store.code+' '+item.store.name)+(item.comment?' · 📌'+esc(item.comment):'')+'</div>'+
+      '</div>'+
+      '<div style="text-align:right">'+
+      '<div style="font-size:18px;font-weight:900;color:#1a3a5c">'+esc(item.qty)+'</div>'+
+      '<div style="font-size:11px;color:#7a9ab8">'+esc(item.unit)+'</div>'+
+      '</div></div>';
+  }).join('');
+}
+
+function removeCart(i){cart.splice(i,1);renderCart();}
+
+function openConfirm(){
+  if(!cart.length){showToast('注文リストが空です');return;}
+  document.getElementById('modal-store-label').textContent=cart.length+'件の注文';
+  document.getElementById('modal-list').innerHTML=cart.map(function(item){
+    return '<div class="modal-row">'+
+      '<div><div style="font-size:14px;font-weight:700;color:#1a3a5c">'+esc(item.fishName)+'</div>'+
+      '<div style="font-size:11px;color:#7a9ab8">'+esc(item.store.code+' '+item.store.name)+(item.comment?' · 📌'+esc(item.comment):'')+'</div></div>'+
+      '<div style="text-align:right;flex-shrink:0;margin-left:12px">'+
+      '<div style="font-size:16px;font-weight:900;color:#1a3a5c">'+esc(item.qty)+' '+esc(item.unit)+'</div>'+
+      '</div></div>';
+  }).join('');
+  document.getElementById('modal-msg').textContent='';
+  document.getElementById('modal-ok-btn').disabled=false;
+  document.getElementById('modal-ok-btn').textContent='📤 注文確定';
+  document.getElementById('confirm-modal').classList.add('show');
+}
+function closeConfirm(){document.getElementById('confirm-modal').classList.remove('show');}
+
+async function submitOrder(){
+  var btn=document.getElementById('modal-ok-btn'),msg=document.getElementById('modal-msg');
+  btn.disabled=true;btn.textContent='送信中...';msg.textContent='';
+  var errors=[];
+  for(var i=0;i<cart.length;i++){
+    var item=cart[i];
+    try{
+      var res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'addNewOrder',sheetId:SHEET_ID,custCode:item.store.code,custName:item.store.name,fishName:item.fishName,qty:item.qty,unit:item.unit,comment:item.comment||null}),headers:{'Content-Type':'text/plain'}});
+      var j=await res.json();
+      if(!j.success) errors.push(item.fishName);
+    }catch(e){errors.push(item.fishName);}
+  }
+  if(!errors.length){
+    var h=JSON.parse(localStorage.getItem('fish_add_hist')||'[]');
+    var now=new Date();
+    h.unshift({items:cart.map(function(x){return {name:x.fishName,qty:x.qty,unit:x.unit,store:x.store.code+' '+x.store.name};}),time:pad(now.getHours())+':'+pad(now.getMinutes())});
+    if(h.length>20)h=h.slice(0,20);
+    localStorage.setItem('fish_add_hist',JSON.stringify(h));
+    cart=[];renderCart();closeConfirm();renderHistory();
+    document.getElementById('store-select').value='';selectedStore=null;selectedFish=null;
+    showToast('注文を送信しました ✓');
+  }else{
+    msg.textContent='エラー: '+errors.join(', ')+'の送信に失敗しました';msg.style.color='#c62828';
+    btn.disabled=false;btn.textContent='📤 注文確定';
+  }
+}
+
+function renderHistory(){
+  var h=JSON.parse(localStorage.getItem('fish_add_hist')||'[]');
+  var sec=document.getElementById('hist-sec');
+  if(!h.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  document.getElementById('hist-list').innerHTML=h.map(function(rec){
+    var rows=(rec.items||[]).map(function(x){
+      return '<div class="hist-row">'+
+        '<span>'+esc(x.name)+(x.store?' <span style="font-size:10px;color:#aaa">'+esc(x.store)+'</span>':'')+'</span>'+
+        '<span style="font-weight:900">'+esc(x.qty)+' '+esc(x.unit)+'</span></div>';
+    }).join('');
+    return '<div class="hist-item"><div class="hist-badge">'+esc(rec.time)+'</div>'+rows+'</div>';
+  }).join('');
+}
+
+function clearHistory(){if(!confirm('注文履歴を全て削除しますか？'))return;localStorage.removeItem('fish_add_hist');renderHistory();showToast('削除しました');}
+function pad(n){return n<10?'0'+n:String(n);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escAttr(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"'");}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2500);}
+init();
+</script>
+</body>
+</html>
