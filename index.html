@@ -7,12 +7,18 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,'Hiragino Sans','Yu Gothic UI',sans-serif;background:#f0f4f9;color:#1a2a3a;min-height:100vh}
-header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;padding:16px 18px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(26,58,92,.3)}
-header h1{font-size:18px;font-weight:700}
-header p{font-size:11px;opacity:.6;margin-top:3px}
+header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(26,58,92,.3)}
+.header-top{padding:14px 18px 10px}
+.header-top h1{font-size:18px;font-weight:700}
+.header-top p{font-size:11px;opacity:.6;margin-top:3px}
+.tab-bar{display:flex;background:rgba(0,0,0,.25)}
+.tab-btn{flex:1;padding:11px 8px;font-size:14px;font-weight:700;font-family:inherit;border:none;cursor:pointer;color:rgba(255,255,255,.5);background:transparent;transition:all .2s;border-bottom:3px solid transparent}
+.tab-btn.active{color:white;background:rgba(255,255,255,.1);border-bottom:3px solid #5bc4f5}
+.tab-content{display:none}
+.tab-content.active{display:block}
 .screen{padding:14px;display:flex;flex-direction:column;gap:12px;max-width:600px;margin:0 auto}
 .sec{background:white;border-radius:14px;border:1.5px solid #e4eaf4;overflow:hidden;box-shadow:0 1px 8px rgba(26,58,92,.06)}
-.sec-head{padding:12px 16px;background:#f7f9fc;border-bottom:1px solid #eaeef4;font-size:12px;font-weight:700;color:#5a7a9a;letter-spacing:.5px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.sec-head{padding:12px 16px;background:#f7f9fc;border-bottom:1px solid #eaeef4;font-size:12px;font-weight:700;color:#5a7a9a;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center}
 .store-select-wrap{padding:12px}
 .store-select{width:100%;padding:12px 16px;border:1.5px solid #e4eaf4;border-radius:10px;font-size:15px;font-family:inherit;color:#1a2a3a;background:#fafbfd;appearance:none;-webkit-appearance:none;cursor:pointer;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231a3a5c' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
 .store-select:focus{outline:none;border-color:#1a3a5c}
@@ -37,7 +43,6 @@ header p{font-size:11px;opacity:.6;margin-top:3px}
 .field select{padding:10px 12px;border:1.5px solid #e4eaf4;border-radius:9px;font-size:16px;font-family:inherit;color:#1a2a3a;font-weight:700;background:#fafbfd;appearance:none;-webkit-appearance:none;width:100%;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231a3a5c' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
 .btn-add-cart{width:100%;padding:13px;background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
 .btn-add-cart:active{opacity:.88}
-/* Cart */
 .cart-item{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f0f4f9}
 .cart-item:last-child{border-bottom:none}
 .cart-del{background:none;border:none;font-size:18px;cursor:pointer;color:#dde4f0;padding:4px;line-height:1;flex-shrink:0}
@@ -45,138 +50,331 @@ header p{font-size:11px;opacity:.6;margin-top:3px}
 .btn-confirm{width:100%;padding:16px;background:linear-gradient(135deg,#c62828,#e53935);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(198,40,40,.25)}
 .btn-confirm:active{opacity:.88}
 .btn-confirm:disabled{opacity:.5}
-/* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .modal-overlay.show{display:flex}
 .modal-box{background:white;border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:600px;max-height:80vh;overflow-y:auto}
 .modal-title{font-size:17px;font-weight:700;color:#1a3a5c;margin-bottom:4px}
 .modal-sub{font-size:12px;color:#7a9ab8;margin-bottom:16px}
 .modal-list{background:#f7f9fc;border-radius:10px;margin-bottom:16px;overflow:hidden}
-.modal-row{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid #eaeef4}
+.modal-row{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 14px;border-bottom:1px solid #eaeef4}
 .modal-row:last-child{border-bottom:none}
 .modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .btn-cancel-modal{padding:13px;background:#f0f4f9;color:#5a7a9a;border:1.5px solid #e4eaf4;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
 .btn-ok-modal{padding:13px;background:linear-gradient(135deg,#c62828,#e53935);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
 .btn-ok-modal:disabled{opacity:.5}
-/* History */
 .hist-list{padding:10px 12px;display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto}
 .hist-item{background:#f7f9fc;border:1.5px solid #e4eaf4;border-radius:9px;padding:10px 13px}
 .hist-badge{display:inline-block;background:#eef3fb;color:#1a3a5c;font-size:10px;font-weight:700;border-radius:5px;padding:2px 7px;margin-bottom:6px}
 .hist-row{display:flex;justify-content:space-between;font-size:13px;color:#1a3a5c;margin-bottom:2px}
-.hist-time{font-size:10px;color:#b0c4d4;margin-top:4px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a3a5c;color:white;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Time block */
+.time-block-wrap{padding:14px;max-width:600px;margin:0 auto}
+.time-block{background:white;border-radius:14px;border:1.5px solid #fde68a;padding:40px 20px;text-align:center;box-shadow:0 1px 8px rgba(26,58,92,.06)}
+.time-block-icon{font-size:52px;margin-bottom:12px}
+.time-block h2{font-size:17px;font-weight:700;color:#92400e;margin-bottom:8px}
+.time-block-clock{font-size:36px;font-weight:900;color:#1a3a5c;margin:14px 0;letter-spacing:3px;font-variant-numeric:tabular-nums}
+.time-block p{font-size:13px;color:#b45309;line-height:1.8}
+.time-block strong{color:#92400e}
+/* Password screen */
+.pw-wrap{padding:14px;max-width:600px;margin:0 auto}
+.pw-screen{background:white;border-radius:14px;border:1.5px solid #e4eaf4;padding:40px 24px;text-align:center;box-shadow:0 1px 8px rgba(26,58,92,.06)}
+.pw-screen-icon{font-size:52px;margin-bottom:14px}
+.pw-screen h2{font-size:18px;font-weight:700;color:#1a3a5c;margin-bottom:8px}
+.pw-screen p{font-size:13px;color:#7a9ab8;line-height:1.7;margin-bottom:22px}
+.pw-input-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.pw-input{width:160px;padding:14px;border:2px solid #e4eaf4;border-radius:10px;font-size:26px;font-family:inherit;font-weight:700;text-align:center;letter-spacing:10px;color:#1a2a3a;background:#fafbfd;transition:border-color .2s}
+.pw-input:focus{outline:none;border-color:#1a3a5c;background:white}
+.btn-pw{padding:13px 36px;background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn-pw:active{opacity:.88}
+.pw-error{color:#c62828;font-size:13px;font-weight:700;min-height:20px;margin-top:4px}
+/* 仕入表 extra fields block */
+.shiire-block{background:#fffbeb;border:1.5px solid #fbbf24;border-radius:10px;padding:12px 12px 4px;margin-bottom:12px}
+.shiire-block-title{font-size:10px;font-weight:700;color:#92400e;letter-spacing:.5px;margin-bottom:10px}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>📝 追加注文入力</h1>
-  <p>手動で注文を追加します</p>
+  <div class="header-top">
+    <h1>📝 追加注文入力</h1>
+    <p>手動で注文を追加します</p>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-btn-s" onclick="switchTab('s')">🏪 店舗用</button>
+    <button class="tab-btn" id="tab-btn-t" onclick="switchTab('t')">👤 担当用</button>
+  </div>
 </header>
 
-<div class="screen">
 
-  <!-- ① 店舗選択 -->
-  <div class="sec">
-    <div class="sec-head">① 店舗を選択</div>
-    <div class="store-select-wrap">
-      <select class="store-select" id="store-select" onchange="onStoreChange(this)">
-        <option value="">-- 店舗を選んでください --</option>
-      </select>
-    </div>
-  </div>
+<!-- ══════════════════════════════════
+     店舗用 TAB
+     利用時間: 毎日 0:00〜2:00 のみ
+     履歴機能: なし
+══════════════════════════════════ -->
+<div id="tab-s" class="tab-content active">
 
-  <!-- ② 魚種検索 -->
-  <div class="sec">
-    <div class="sec-head">② 魚種を検索</div>
-    <div class="search-wrap">
-      <div class="search-box">
-        <span style="font-size:16px">🔍</span>
-        <input type="search" id="fish-search" placeholder="魚名を入力（例: sawara / サワラ）" oninput="searchFish(this.value)" autocomplete="off">
+  <!-- 時間外ブロック -->
+  <div id="s-time-block" style="display:none">
+    <div class="time-block-wrap">
+      <div class="time-block">
+        <div class="time-block-icon">🔒</div>
+        <h2>現在ご利用できません</h2>
+        <div class="time-block-clock" id="s-clock">--:--:--</div>
+        <p>店舗用タブは<strong>毎日 0:00 〜 2:00</strong> のみ<br>ご利用いただけます。</p>
       </div>
     </div>
-    <div id="fish-load-status" style="padding:4px 14px 8px;font-size:12px;color:#aaa">読み込み中...</div>
-    <div class="results" id="fish-results"></div>
   </div>
 
-  <!-- ③ 数量・単位 -->
-  <div class="sec" id="input-sec" style="display:none">
-    <div class="sel-info" id="sel-info">-</div>
-    <div class="input-body">
-      <div class="input-row">
-        <div class="field">
-          <label>数量</label>
-          <input type="number" id="add-qty" inputmode="decimal" placeholder="0">
-        </div>
-        <div class="field">
-          <label>単位</label>
-          <select id="add-unit">
-            <option value="">-- 選択 --</option>
-            <option value="kg">kg</option>
-            <option value="本">本</option>
-            <option value="PC">PC</option>
-            <option value="枚">枚</option>
-            <option value="箱">箱</option>
-            <option value="束">束</option>
-            <option value="杯">杯</option>
-            <option value="尾">尾</option>
-          </select>
-        </div>
-        <div class="field full">
-          <label>コメント（任意）</label>
-          <input type="text" id="add-comment" placeholder="例: 小さいサイズでお願いします">
+  <div id="s-main" class="screen">
+
+    <!-- ① 店舗選択 -->
+    <div class="sec">
+      <div class="sec-head">① 店舗を選択</div>
+      <div class="store-select-wrap">
+        <select class="store-select" id="s-store-select" onchange="onStoreChange(this,'s')">
+          <option value="">-- 店舗を選んでください --</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ② 魚種検索 -->
+    <div class="sec">
+      <div class="sec-head">② 魚種を検索</div>
+      <div class="search-wrap">
+        <div class="search-box">
+          <span style="font-size:16px">🔍</span>
+          <input type="search" id="s-fish-search" placeholder="魚名を入力（例: sawara / サワラ）"
+            oninput="searchFish(this.value,'s')" autocomplete="off">
         </div>
       </div>
-      <button class="btn-add-cart" onclick="addToCart()">＋ リストに追加</button>
+      <div id="s-fish-status" style="padding:4px 14px 8px;font-size:12px;color:#aaa">読み込み中...</div>
+      <div class="results" id="s-fish-results"></div>
     </div>
-  </div>
 
-  <!-- ④ 注文リスト -->
-  <div class="sec" id="cart-sec" style="display:none">
-    <div class="sec-head">
-      <span>🛒 注文リスト</span>
-      <span id="cart-count" style="background:#1a3a5c;color:white;border-radius:20px;padding:2px 10px;font-size:12px">0件</span>
+    <!-- ③ 数量・単位 -->
+    <div class="sec" id="s-input-sec" style="display:none">
+      <div class="sel-info" id="s-sel-info">-</div>
+      <div class="input-body">
+        <div class="input-row">
+          <div class="field">
+            <label>数量</label>
+            <input type="number" id="s-add-qty" inputmode="decimal" placeholder="0">
+          </div>
+          <div class="field">
+            <label>単位</label>
+            <select id="s-add-unit">
+              <option value="">-- 選択 --</option>
+              <option value="kg">kg</option>
+              <option value="本">本</option>
+              <option value="PC">PC</option>
+              <option value="枚">枚</option>
+              <option value="箱">箱</option>
+              <option value="束">束</option>
+              <option value="杯">杯</option>
+              <option value="尾">尾</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>コメント（任意）</label>
+            <input type="text" id="s-add-comment" placeholder="例: 小さいサイズでお願いします">
+          </div>
+        </div>
+        <button class="btn-add-cart" onclick="addToCart('s')">＋ リストに追加</button>
+      </div>
     </div>
-    <div id="cart-list"></div>
-    <div style="padding:14px">
-      <button class="btn-confirm" onclick="openConfirm()">確認、注文をする</button>
-    </div>
-  </div>
 
-  <!-- 履歴 -->
-  <div class="sec" id="hist-sec" style="display:none">
-    <div class="sec-head">
-      <span>📋 注文履歴</span>
-      <button onclick="clearHistory()" style="font-size:11px;color:#c62828;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">🗑 全削除</button>
+    <!-- ④ 注文リスト -->
+    <div class="sec" id="s-cart-sec" style="display:none">
+      <div class="sec-head">
+        <span>🛒 注文リスト</span>
+        <span id="s-cart-count" style="background:#1a3a5c;color:white;border-radius:20px;padding:2px 10px;font-size:12px">0件</span>
+      </div>
+      <div id="s-cart-list"></div>
+      <div style="padding:14px">
+        <button class="btn-confirm" onclick="openConfirm('s')">確認、注文をする</button>
+      </div>
     </div>
-    <div class="hist-list" id="hist-list"></div>
-  </div>
 
+    <!-- 店舗用には履歴セクションなし -->
+  </div>
 </div>
 
-<!-- 確認モーダル -->
-<div class="modal-overlay" id="confirm-modal">
+
+<!-- ══════════════════════════════════
+     担当用 TAB
+     パスワード: 999
+     いつでも利用可能
+     履歴機能: あり
+══════════════════════════════════ -->
+<div id="tab-t" class="tab-content">
+
+  <!-- パスワード画面 -->
+  <div id="t-lock">
+    <div class="pw-wrap">
+      <div class="pw-screen">
+        <div class="pw-screen-icon">🔐</div>
+        <h2>担当用 — ログイン</h2>
+        <p>このタブは担当者専用です。<br>パスワードを入力してください。</p>
+        <div class="pw-input-wrap">
+          <input type="password" class="pw-input" id="t-pw-input"
+            placeholder="●●●" maxlength="10"
+            onkeydown="if(event.key==='Enter')checkPw()">
+          <button class="btn-pw" onclick="checkPw()">ログイン</button>
+          <div class="pw-error" id="t-pw-error"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- メイン（ロック解除後） -->
+  <div id="t-main" class="screen" style="display:none">
+
+    <!-- ① 店舗選択 -->
+    <div class="sec">
+      <div class="sec-head">① 店舗を選択</div>
+      <div class="store-select-wrap">
+        <select class="store-select" id="t-store-select" onchange="onStoreChange(this,'t')">
+          <option value="">-- 店舗を選んでください --</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ② 魚種検索 -->
+    <div class="sec">
+      <div class="sec-head">② 魚種を検索</div>
+      <div class="search-wrap">
+        <div class="search-box">
+          <span style="font-size:16px">🔍</span>
+          <input type="search" id="t-fish-search" placeholder="魚名を入力（例: sawara / サワラ）"
+            oninput="searchFish(this.value,'t')" autocomplete="off">
+        </div>
+      </div>
+      <div id="t-fish-status" style="padding:4px 14px 8px;font-size:12px;color:#aaa">読み込み中...</div>
+      <div class="results" id="t-fish-results"></div>
+    </div>
+
+    <!-- ③ 数量・単位・仕入情報 -->
+    <div class="sec" id="t-input-sec" style="display:none">
+      <div class="sel-info" id="t-sel-info">-</div>
+      <div class="input-body">
+        <!-- 注文情報 -->
+        <div class="input-row">
+          <div class="field">
+            <label>注文数量</label>
+            <input type="number" id="t-add-qty" inputmode="decimal" placeholder="0">
+          </div>
+          <div class="field">
+            <label>単位</label>
+            <select id="t-add-unit">
+              <option value="">-- 選択 --</option>
+              <option value="kg">kg</option>
+              <option value="本">本</option>
+              <option value="PC">PC</option>
+              <option value="枚">枚</option>
+              <option value="箱">箱</option>
+              <option value="束">束</option>
+              <option value="杯">杯</option>
+              <option value="尾">尾</option>
+            </select>
+          </div>
+        </div>
+        <!-- 仕入表 入力 (列F・H・I) -->
+        <div class="shiire-block">
+          <div class="shiire-block-title">📊 仕入表入力（列 F・H・I）</div>
+          <div class="input-row">
+            <div class="field">
+              <label>数量 (F列)</label>
+              <input type="number" id="t-add-jissuu" inputmode="decimal" placeholder="0">
+            </div>
+            <div class="field">
+              <label>単価 (H列)</label>
+              <input type="number" id="t-add-tanka" inputmode="decimal" placeholder="0">
+            </div>
+            <div class="field full">
+              <label>仕入単価 (I列)</label>
+              <input type="number" id="t-add-shiiretanka" inputmode="decimal" placeholder="0">
+            </div>
+          </div>
+        </div>
+        <!-- コメント -->
+        <div class="input-row">
+          <div class="field full">
+            <label>コメント（任意）</label>
+            <input type="text" id="t-add-comment" placeholder="例: 小さいサイズでお願いします">
+          </div>
+        </div>
+        <button class="btn-add-cart" onclick="addToCart('t')">＋ リストに追加</button>
+      </div>
+    </div>
+
+    <!-- ④ 注文リスト -->
+    <div class="sec" id="t-cart-sec" style="display:none">
+      <div class="sec-head">
+        <span>🛒 注文リスト</span>
+        <span id="t-cart-count" style="background:#1a3a5c;color:white;border-radius:20px;padding:2px 10px;font-size:12px">0件</span>
+      </div>
+      <div id="t-cart-list"></div>
+      <div style="padding:14px">
+        <button class="btn-confirm" onclick="openConfirm('t')">確認、注文をする</button>
+      </div>
+    </div>
+
+    <!-- ⑤ 注文履歴（担当用のみ表示・操作可） -->
+    <div class="sec" id="t-hist-sec" style="display:none">
+      <div class="sec-head">
+        <span>📋 注文履歴</span>
+        <button onclick="clearHistory()" style="font-size:11px;color:#c62828;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">🗑 全削除</button>
+      </div>
+      <div class="hist-list" id="t-hist-list"></div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══ 確認モーダル (店舗用) ══ -->
+<div class="modal-overlay" id="s-confirm-modal">
   <div class="modal-box">
     <div class="modal-title">📋 注文内容の確認</div>
-    <div class="modal-sub" id="modal-store-label">-</div>
-    <div class="modal-list" id="modal-list"></div>
-    <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#92400e;line-height:1.6">
-      ⚠️ ご注文のタイミングによっては、通常より価格が高くなる場合がございます。予めご了承くださいませ。
+    <div class="modal-sub" id="s-modal-sub">-</div>
+    <div class="modal-list" id="s-modal-list"></div>
+    <div style="background:#fff8f8;border:1.5px solid #fca5a5;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:13px;color:#7f1d1d;line-height:1.7;text-align:center;font-weight:600">
+      システム利用料として1回につき500円を申し受けます。
     </div>
     <div class="modal-btns">
-      <button class="btn-cancel-modal" onclick="closeConfirm()">キャンセル</button>
-      <button class="btn-ok-modal" id="modal-ok-btn" onclick="submitOrder()">📤 注文確定</button>
+      <button class="btn-cancel-modal" onclick="closeConfirm('s')">キャンセル</button>
+      <button class="btn-ok-modal" id="s-modal-ok-btn" onclick="submitOrder('s')">📤 注文確定</button>
     </div>
-    <div id="modal-msg" style="text-align:center;font-size:12px;margin-top:10px;font-weight:600"></div>
+    <div id="s-modal-msg" style="text-align:center;font-size:12px;margin-top:10px;font-weight:600"></div>
+  </div>
+</div>
+
+<!-- ══ 確認モーダル (担当用) ══ -->
+<div class="modal-overlay" id="t-confirm-modal">
+  <div class="modal-box">
+    <div class="modal-title">📋 注文内容の確認</div>
+    <div class="modal-sub" id="t-modal-sub">-</div>
+    <div class="modal-list" id="t-modal-list"></div>
+    <div style="background:#fff8f8;border:1.5px solid #fca5a5;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:13px;color:#7f1d1d;line-height:1.7;text-align:center;font-weight:600">
+      システム利用料として1回につき500円を申し受けます。
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel-modal" onclick="closeConfirm('t')">キャンセル</button>
+      <button class="btn-ok-modal" id="t-modal-ok-btn" onclick="submitOrder('t')">📤 注文確定</button>
+    </div>
+    <div id="t-modal-msg" style="text-align:center;font-size:12px;margin-top:10px;font-weight:600"></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-var GAS_URL  = 'https://script.google.com/macros/s/AKfycbwn0OmNmwvfoOrI5-kcMnLTeQxvbg1yOk-iFyrHXuW17pmz3b2C4Pt5MkxLslYAkxJn8Q/exec';
-var SHEET_ID = '1D1b7d6MKMO1dXkYJvDlJKPZq7Gt3zQrjFAzp7ro22Uw';
+/* ─── CONFIG ─── */
+var GAS_URL         = 'https://script.google.com/macros/s/AKfycbwn0OmNmwvfoOrI5-kcMnLTeQxvbg1yOk-iFyrHXuW17pmz3b2C4Pt5MkxLslYAkxJn8Q/exec';
+var SHEET_ID        = '1D1b7d6MKMO1dXkYJvDlJKPZq7Gt3zQrjFAzp7ro22Uw';
+var SHIIRE_SHEET_ID = '1mXrNddkibkMpUBcof-vhPNTzahO3Y456Ejh6obNU9zw';
+var TANTO_PASSWORD  = '999';
 
 var STORES = [
   {code:2,name:'大晴海'},{code:3,name:'海の路'},{code:4,name:'板付製造'},
@@ -188,8 +386,16 @@ var STORES = [
   {code:21,name:'飛うお'},{code:22,name:'とりとりと'},{code:30,name:'藤う那博多'}
 ];
 
-var FISH_NAMES=[], selectedStore=null, selectedFish=null, cart=[];
+var FISH_NAMES = [];
+var clockTimer = null;
 
+/* Per-tab state */
+var state = {
+  s: { store:null, fish:null, cart:[] },
+  t: { store:null, fish:null, cart:[] }
+};
+
+/* ─── Kana / Romaji helpers ─── */
 var ROMAJI_MAP=[['shi','し'],['chi','ち'],['tsu','つ'],['sha','しゃ'],['shu','しゅ'],['sho','しょ'],
   ['cha','ちゃ'],['chu','ちゅ'],['cho','ちょ'],['ka','か'],['ki','き'],['ku','く'],['ke','け'],['ko','こ'],
   ['sa','さ'],['si','し'],['su','す'],['se','せ'],['so','そ'],['ta','た'],['te','て'],['to','と'],
@@ -200,8 +406,8 @@ var ROMAJI_MAP=[['shi','し'],['chi','ち'],['tsu','つ'],['sha','しゃ'],['shu
   ['da','だ'],['de','で'],['do','ど'],['ba','ば'],['bi','び'],['bu','ぶ'],['be','べ'],['bo','ぼ'],
   ['pa','ぱ'],['pi','ぴ'],['pu','ぷ'],['pe','ぺ'],['po','ぽ'],
   ['a','あ'],['i','い'],['u','う'],['e','え'],['o','お'],['n','ん']];
-// ── Kanji → Hiragana reading map (魚名によく使う漢字) ──
-var KANJI_YOMI = [
+
+var KANJI_YOMI=[
   ['小鯛','こだい'],['白魚','しらうお'],['真子','まこ'],['身欠き','みがき'],
   ['活','かつ'],['締り','しまり'],['天然','てんねん'],['冷凍','れいとう'],
   ['煮付け','につけ'],['殻付き','からつき'],['姫','ひめ'],['桜','さくら'],
@@ -218,187 +424,332 @@ var KANJI_YOMI = [
 function toHira(s){return s.replace(/[\u30A1-\u30F6]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0x60);});}
 function romaToHira(str){
   var s=str.toLowerCase(),r='',i=0;
-  while(i<s.length){
-    var f=false;
-    for(var j=0;j<ROMAJI_MAP.length;j++){
-      var rom=ROMAJI_MAP[j][0];
-      if(s.substr(i,rom.length)===rom){r+=ROMAJI_MAP[j][1];i+=rom.length;f=true;break;}
-    }
-    if(!f){r+=s[i];i++;}
+  while(i<s.length){var f=false;
+    for(var j=0;j<ROMAJI_MAP.length;j++){var rom=ROMAJI_MAP[j][0];
+      if(s.substr(i,rom.length)===rom){r+=ROMAJI_MAP[j][1];i+=rom.length;f=true;break;}}
+    if(!f){r+=s[i];i++;}} return r;}
+function kanjiToHira(name){var r=name;KANJI_YOMI.forEach(function(p){r=r.split(p[0]).join(p[1]);});return r;}
+
+/* ─── Tab switching ─── */
+function switchTab(tab) {
+  ['s','t'].forEach(function(k){
+    document.getElementById('tab-'+k).classList.remove('active');
+    document.getElementById('tab-btn-'+k).classList.remove('active');
+  });
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('tab-btn-'+tab).classList.add('active');
+  if(tab==='s') checkStoreTime();
+}
+
+/* ─── 店舗用: time restriction 0:00~2:00 ─── */
+function checkStoreTime(){
+  var h=new Date().getHours();
+  var allowed=(h>=0&&h<2);
+  document.getElementById('s-time-block').style.display = allowed?'none':'block';
+  document.getElementById('s-main').style.display       = allowed?'flex':'none';
+  if(!allowed){ startClock(); }
+  else if(clockTimer){ clearInterval(clockTimer); clockTimer=null; }
+}
+
+function startClock(){
+  if(clockTimer) return;
+  var tick=function(){
+    var now=new Date();
+    var el=document.getElementById('s-clock');
+    if(el) el.textContent=pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+    if(now.getHours()>=0&&now.getHours()<2){ clearInterval(clockTimer); clockTimer=null; checkStoreTime(); }
+  };
+  tick();
+  clockTimer=setInterval(tick,1000);
+}
+
+/* ─── 担当用: password ─── */
+function checkPw(){
+  var v=document.getElementById('t-pw-input').value;
+  if(v===TANTO_PASSWORD){
+    document.getElementById('t-lock').style.display='none';
+    document.getElementById('t-main').style.display='flex';
+    renderHistory();
+  }else{
+    document.getElementById('t-pw-error').textContent='パスワードが違います';
+    document.getElementById('t-pw-input').value='';
+    setTimeout(function(){document.getElementById('t-pw-error').textContent='';},2000);
   }
-  return r;
 }
 
-function kanjiToHira(name) {
-  var result = name;
-  KANJI_YOMI.forEach(function(pair){ result = result.split(pair[0]).join(pair[1]); });
-  return result;
-}
-
+/* ─── Init ─── */
 async function init(){
-  renderStoreDropdown(); renderHistory();
-  var st=document.getElementById('fish-load-status');
+  renderStoreDropdown('s');
+  renderStoreDropdown('t');
+  checkStoreTime();
   try{
     var res=await fetch(GAS_URL+'?action=getMaster');
     var j=await res.json();
-    if(j.success&&j.fishNames){FISH_NAMES=j.fishNames;st.textContent=FISH_NAMES.length+'種類の魚が検索可能です';}
-    else{st.textContent='エラー: '+(j.error||'不明');}
-  }catch(e){st.textContent='通信エラー — リロードしてください';}
+    if(j.success&&j.fishNames){
+      FISH_NAMES=j.fishNames;
+      var txt=FISH_NAMES.length+'種類の魚が検索可能です';
+      document.getElementById('s-fish-status').textContent=txt;
+      document.getElementById('t-fish-status').textContent=txt;
+    }else{
+      var err='エラー: '+(j.error||'不明');
+      document.getElementById('s-fish-status').textContent=err;
+      document.getElementById('t-fish-status').textContent=err;
+    }
+  }catch(e){
+    var msg='通信エラー — リロードしてください';
+    document.getElementById('s-fish-status').textContent=msg;
+    document.getElementById('t-fish-status').textContent=msg;
+  }
 }
 
-function renderStoreDropdown(){
-  var sel=document.getElementById('store-select');
-  STORES.forEach(function(s){var o=document.createElement('option');o.value=s.code;o.textContent=s.code+'　'+s.name;sel.appendChild(o);});
+function renderStoreDropdown(tab){
+  var sel=document.getElementById(tab+'-store-select');
+  STORES.forEach(function(s){
+    var o=document.createElement('option');
+    o.value=s.code; o.textContent=s.code+'　'+s.name; sel.appendChild(o);
+  });
 }
 
-function onStoreChange(sel){
+/* ─── Store select ─── */
+function onStoreChange(sel,tab){
   var code=parseInt(sel.value);
-  selectedStore=STORES.filter(function(s){return s.code===code;})[0]||null;
-  updateInputSec();
+  state[tab].store=STORES.filter(function(s){return s.code===code;})[0]||null;
+  updateInputSec(tab);
 }
 
-function searchFish(q){
-  var el=document.getElementById('fish-results'),raw=q.trim();
+/* ─── Fish search ─── */
+function searchFish(q,tab){
+  var el=document.getElementById(tab+'-fish-results'), raw=q.trim();
   if(!raw){el.innerHTML='';return;}
   var ql=raw.toLowerCase(), qH=romaToHira(ql);
   var m=FISH_NAMES.filter(function(n){
-    var nl  = n.toLowerCase();
-    var nh  = toHira(nl);               // カタカナ→ひらがな
-    var nk  = kanjiToHira(nl);          // 漢字→ひらがな
-    var nkh = toHira(nk);               // さらにカタカナ→ひらがな
-    return nl.indexOf(ql)!==-1 ||       // 直接一致
-           nh.indexOf(qH)!==-1 ||       // カタカナ→ひらがな一致
-           nk.indexOf(qH)!==-1 ||       // 漢字読み一致
-           nkh.indexOf(qH)!==-1;        // 漢字+カタカナ→ひらがな一致
+    var nl=n.toLowerCase(),nh=toHira(nl),nk=kanjiToHira(nl),nkh=toHira(nk);
+    return nl.indexOf(ql)!==-1||nh.indexOf(qH)!==-1||nk.indexOf(qH)!==-1||nkh.indexOf(qH)!==-1;
   }).slice(0,20);
   if(!m.length){
     el.innerHTML='<div style="padding:8px 14px;font-size:13px;color:#aaa">該当なし</div>'+
-      '<div class="result-item" onclick="selectFish(\''+escAttr(raw)+'\')">📝 「'+esc(raw)+'」をそのまま使用</div>';
+      '<div class="result-item" onclick="selectFish(\''+escAttr(raw)+'\',\''+tab+'\')">📝 「'+esc(raw)+'」をそのまま使用</div>';
     return;
   }
   el.innerHTML=m.map(function(n){
-    return '<div class="result-item'+(selectedFish===n?' selected':'')+'" onclick="selectFish(\''+escAttr(n)+'\')">'+esc(n)+'</div>';
+    return '<div class="result-item'+(state[tab].fish===n?' selected':'')+'" onclick="selectFish(\''+escAttr(n)+'\',\''+tab+'\')">'+esc(n)+'</div>';
   }).join('');
 }
 
-function selectFish(name){
-  selectedFish=name;
-  document.getElementById('fish-search').value=name;
-  document.getElementById('fish-results').innerHTML='<div class="result-item selected">'+esc(name)+'</div>';
-  updateInputSec();
+function selectFish(name,tab){
+  state[tab].fish=name;
+  document.getElementById(tab+'-fish-search').value=name;
+  document.getElementById(tab+'-fish-results').innerHTML='<div class="result-item selected">'+esc(name)+'</div>';
+  updateInputSec(tab);
 }
 
-function updateInputSec(){
-  var sec=document.getElementById('input-sec');
-  if(selectedStore&&selectedFish){sec.style.display='block';document.getElementById('sel-info').textContent=selectedStore.code+' '+selectedStore.name+' ／ '+selectedFish;}
-  else{sec.style.display='none';}
+function updateInputSec(tab){
+  var sec=document.getElementById(tab+'-input-sec');
+  if(state[tab].store&&state[tab].fish){
+    sec.style.display='block';
+    document.getElementById(tab+'-sel-info').textContent=
+      state[tab].store.code+' '+state[tab].store.name+' ／ '+state[tab].fish;
+  }else{ sec.style.display='none'; }
 }
 
-function addToCart(){
-  if(!selectedStore||!selectedFish){showToast('店舗と魚種を選択してください');return;}
-  var qty=document.getElementById('add-qty').value.trim();
-  var unit=document.getElementById('add-unit').value;
-  var cmt=document.getElementById('add-comment').value.trim();
+/* ─── Add to cart ─── */
+function addToCart(tab){
+  if(!state[tab].store||!state[tab].fish){showToast('店舗と魚種を選択してください');return;}
+  var qty=document.getElementById(tab+'-add-qty').value.trim();
+  var unit=document.getElementById(tab+'-add-unit').value;
+  var cmt=document.getElementById(tab+'-add-comment').value.trim();
   if(!qty){showToast('数量を入力してください');return;}
   if(!unit){showToast('単位を選択してください');return;}
-  cart.push({store:selectedStore,fishName:selectedFish,qty:qty,unit:unit,comment:cmt});
-  renderCart();
-  document.getElementById('add-qty').value='';
-  document.getElementById('add-unit').value='';
-  document.getElementById('add-comment').value='';
-  document.getElementById('fish-search').value='';
-  document.getElementById('fish-results').innerHTML='';
-  document.getElementById('input-sec').style.display='none';
-  selectedFish=null;
+
+  var item={store:state[tab].store,fishName:state[tab].fish,qty:qty,unit:unit,comment:cmt};
+
+  if(tab==='t'){
+    var jissuu=document.getElementById('t-add-jissuu').value.trim();
+    var tanka=document.getElementById('t-add-tanka').value.trim();
+    var shiiretanka=document.getElementById('t-add-shiiretanka').value.trim();
+    if(!jissuu){showToast('数量 (F列) を入力してください');return;}
+    if(!tanka){showToast('単価 (H列) を入力してください');return;}
+    item.jissuu=jissuu; item.tanka=tanka; item.shiiretanka=shiiretanka;
+  }
+
+  state[tab].cart.push(item);
+  renderCart(tab);
+
+  // フォームリセット
+  document.getElementById(tab+'-add-qty').value='';
+  document.getElementById(tab+'-add-unit').value='';
+  document.getElementById(tab+'-add-comment').value='';
+  document.getElementById(tab+'-fish-search').value='';
+  document.getElementById(tab+'-fish-results').innerHTML='';
+  document.getElementById(tab+'-input-sec').style.display='none';
+  state[tab].fish=null;
+  if(tab==='t'){
+    document.getElementById('t-add-jissuu').value='';
+    document.getElementById('t-add-tanka').value='';
+    document.getElementById('t-add-shiiretanka').value='';
+  }
   showToast('リストに追加しました ✓');
 }
 
-function renderCart(){
-  var sec=document.getElementById('cart-sec'),el=document.getElementById('cart-list');
+/* ─── Render cart ─── */
+function renderCart(tab){
+  var sec=document.getElementById(tab+'-cart-sec');
+  var el=document.getElementById(tab+'-cart-list');
+  var cart=state[tab].cart;
   if(!cart.length){sec.style.display='none';return;}
   sec.style.display='block';
-  document.getElementById('cart-count').textContent=cart.length+'件';
+  document.getElementById(tab+'-cart-count').textContent=cart.length+'件';
   el.innerHTML=cart.map(function(item,i){
+    var extra='';
+    if(tab==='t'){
+      extra='<div style="font-size:10px;color:#92400e;margin-top:3px;background:#fffbeb;border-radius:4px;padding:2px 6px;display:inline-block">'+
+        'F:'+esc(item.jissuu)+'　H:'+esc(item.tanka)+'　I:'+esc(item.shiiretanka)+'</div>';
+    }
     return '<div class="cart-item">'+
-      '<button class="cart-del" onclick="removeCart('+i+')">✕</button>'+
-      '<div style="flex:1">'+
+      '<button class="cart-del" onclick="removeCart('+i+',\''+tab+'\')">✕</button>'+
+      '<div style="flex:1;min-width:0">'+
       '<div style="font-size:14px;font-weight:700;color:#1a3a5c">'+esc(item.fishName)+'</div>'+
       '<div style="font-size:11px;color:#7a9ab8">'+esc(item.store.code+' '+item.store.name)+(item.comment?' · 📌'+esc(item.comment):'')+'</div>'+
-      '</div>'+
-      '<div style="text-align:right">'+
+      extra+'</div>'+
+      '<div style="text-align:right;flex-shrink:0;margin-left:8px">'+
       '<div style="font-size:18px;font-weight:900;color:#1a3a5c">'+esc(item.qty)+'</div>'+
       '<div style="font-size:11px;color:#7a9ab8">'+esc(item.unit)+'</div>'+
       '</div></div>';
   }).join('');
 }
 
-function removeCart(i){cart.splice(i,1);renderCart();}
+function removeCart(i,tab){state[tab].cart.splice(i,1);renderCart(tab);}
 
-function openConfirm(){
+/* ─── Confirm modal ─── */
+function openConfirm(tab){
+  var cart=state[tab].cart;
   if(!cart.length){showToast('注文リストが空です');return;}
-  document.getElementById('modal-store-label').textContent=cart.length+'件の注文';
-  document.getElementById('modal-list').innerHTML=cart.map(function(item){
+  document.getElementById(tab+'-modal-sub').textContent=cart.length+'件の注文';
+  document.getElementById(tab+'-modal-list').innerHTML=cart.map(function(item){
+    var extra='';
+    if(tab==='t'){
+      extra='<div style="font-size:10px;color:#92400e;margin-top:4px">'+
+        '数量F: <b>'+esc(item.jissuu)+'</b>　単価H: <b>'+esc(item.tanka)+'</b>　仕入I: <b>'+esc(item.shiiretanka)+'</b></div>';
+    }
     return '<div class="modal-row">'+
-      '<div><div style="font-size:14px;font-weight:700;color:#1a3a5c">'+esc(item.fishName)+'</div>'+
-      '<div style="font-size:11px;color:#7a9ab8">'+esc(item.store.code+' '+item.store.name)+(item.comment?' · 📌'+esc(item.comment):'')+'</div></div>'+
+      '<div style="flex:1;min-width:0">'+
+      '<div style="font-size:14px;font-weight:700;color:#1a3a5c">'+esc(item.fishName)+'</div>'+
+      '<div style="font-size:11px;color:#7a9ab8">'+esc(item.store.code+' '+item.store.name)+(item.comment?' · 📌'+esc(item.comment):'')+'</div>'+
+      extra+'</div>'+
       '<div style="text-align:right;flex-shrink:0;margin-left:12px">'+
       '<div style="font-size:16px;font-weight:900;color:#1a3a5c">'+esc(item.qty)+' '+esc(item.unit)+'</div>'+
       '</div></div>';
   }).join('');
-  document.getElementById('modal-msg').textContent='';
-  document.getElementById('modal-ok-btn').disabled=false;
-  document.getElementById('modal-ok-btn').textContent='📤 注文確定';
-  document.getElementById('confirm-modal').classList.add('show');
+  document.getElementById(tab+'-modal-msg').textContent='';
+  document.getElementById(tab+'-modal-ok-btn').disabled=false;
+  document.getElementById(tab+'-modal-ok-btn').textContent='📤 注文確定';
+  document.getElementById(tab+'-confirm-modal').classList.add('show');
 }
-function closeConfirm(){document.getElementById('confirm-modal').classList.remove('show');}
 
-async function submitOrder(){
-  var btn=document.getElementById('modal-ok-btn'),msg=document.getElementById('modal-msg');
-  btn.disabled=true;btn.textContent='送信中...';msg.textContent='';
+function closeConfirm(tab){document.getElementById(tab+'-confirm-modal').classList.remove('show');}
+
+/* ─── Submit ─── */
+async function submitOrder(tab){
+  var btn=document.getElementById(tab+'-modal-ok-btn');
+  var msg=document.getElementById(tab+'-modal-msg');
+  var cart=state[tab].cart;
+  btn.disabled=true; btn.textContent='送信中...'; msg.textContent='';
   var errors=[];
+
   for(var i=0;i<cart.length;i++){
     var item=cart[i];
     try{
-      var res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'addNewOrder',sheetId:SHEET_ID,custCode:item.store.code,custName:item.store.name,fishName:item.fishName,qty:item.qty,unit:item.unit,comment:item.comment||null}),headers:{'Content-Type':'text/plain'}});
+      // 1) addNewOrder → 元のスプレッドシート（両タブ共通）
+      var res=await fetch(GAS_URL,{
+        method:'POST',
+        body:JSON.stringify({action:'addNewOrder',sheetId:SHEET_ID,
+          custCode:item.store.code,custName:item.store.name,
+          fishName:item.fishName,qty:item.qty,unit:item.unit,
+          comment:item.comment||null}),
+        headers:{'Content-Type':'text/plain'}
+      });
       var j=await res.json();
-      if(!j.success) errors.push(item.fishName);
+      if(!j.success){errors.push(item.fishName);continue;}
+
+      // 2) addShiireHyo → 仕入表（担当用のみ）
+      if(tab==='t'){
+        var res2=await fetch(GAS_URL,{
+          method:'POST',
+          body:JSON.stringify({action:'addShiireHyo',
+            shiireSheetId:SHIIRE_SHEET_ID,
+            custCode:item.store.code, custName:item.store.name,
+            fishName:item.fishName,
+            jissuu:item.jissuu, tanka:item.tanka, shiiretanka:item.shiiretanka}),
+          headers:{'Content-Type':'text/plain'}
+        });
+        var j2=await res2.json();
+        if(!j2.success){errors.push(item.fishName+'(仕入表)');continue;}
+      }
     }catch(e){errors.push(item.fishName);}
   }
+
   if(!errors.length){
-    var h=JSON.parse(localStorage.getItem('fish_add_hist')||'[]');
-    var now=new Date();
-    h.unshift({items:cart.map(function(x){return {name:x.fishName,qty:x.qty,unit:x.unit,store:x.store.code+' '+x.store.name};}),time:pad(now.getHours())+':'+pad(now.getMinutes())});
-    if(h.length>20)h=h.slice(0,20);
-    localStorage.setItem('fish_add_hist',JSON.stringify(h));
-    cart=[];renderCart();closeConfirm();renderHistory();
-    document.getElementById('store-select').value='';selectedStore=null;selectedFish=null;
+    // 担当用のみ履歴を保存
+    if(tab==='t'){
+      var h=JSON.parse(localStorage.getItem('fish_add_hist_tanto')||'[]');
+      var now=new Date();
+      h.unshift({
+        time:pad(now.getHours())+':'+pad(now.getMinutes()),
+        items:cart.map(function(x){return {
+          name:x.fishName, qty:x.qty, unit:x.unit,
+          store:x.store.code+' '+x.store.name,
+          jissuu:x.jissuu, tanka:x.tanka, shiiretanka:x.shiiretanka
+        };})
+      });
+      if(h.length>20)h=h.slice(0,20);
+      localStorage.setItem('fish_add_hist_tanto',JSON.stringify(h));
+      renderHistory();
+    }
+    state[tab].cart=[];
+    renderCart(tab);
+    closeConfirm(tab);
+    document.getElementById(tab+'-store-select').value='';
+    state[tab].store=null; state[tab].fish=null;
     showToast('注文を送信しました ✓');
   }else{
-    msg.textContent='エラー: '+errors.join(', ')+'の送信に失敗しました';msg.style.color='#c62828';
-    btn.disabled=false;btn.textContent='📤 注文確定';
+    msg.textContent='エラー: '+errors.join(', ')+'の送信に失敗しました';
+    msg.style.color='#c62828';
+    btn.disabled=false; btn.textContent='📤 注文確定';
   }
 }
 
+/* ─── History（担当用のみ） ─── */
 function renderHistory(){
-  var h=JSON.parse(localStorage.getItem('fish_add_hist')||'[]');
-  var sec=document.getElementById('hist-sec');
+  var h=JSON.parse(localStorage.getItem('fish_add_hist_tanto')||'[]');
+  var sec=document.getElementById('t-hist-sec');
   if(!h.length){sec.style.display='none';return;}
   sec.style.display='block';
-  document.getElementById('hist-list').innerHTML=h.map(function(rec){
+  document.getElementById('t-hist-list').innerHTML=h.map(function(rec){
     var rows=(rec.items||[]).map(function(x){
+      var shiire=x.jissuu
+        ?'<div style="font-size:10px;color:#92400e;margin-bottom:3px">F:'+esc(x.jissuu)+'　H:'+esc(x.tanka)+'　I:'+esc(x.shiiretanka)+'</div>'
+        :'';
       return '<div class="hist-row">'+
         '<span>'+esc(x.name)+(x.store?' <span style="font-size:10px;color:#aaa">'+esc(x.store)+'</span>':'')+'</span>'+
-        '<span style="font-weight:900">'+esc(x.qty)+' '+esc(x.unit)+'</span></div>';
+        '<span style="font-weight:900">'+esc(x.qty)+' '+esc(x.unit)+'</span></div>'+shiire;
     }).join('');
     return '<div class="hist-item"><div class="hist-badge">'+esc(rec.time)+'</div>'+rows+'</div>';
   }).join('');
 }
 
-function clearHistory(){if(!confirm('注文履歴を全て削除しますか？'))return;localStorage.removeItem('fish_add_hist');renderHistory();showToast('削除しました');}
+function clearHistory(){
+  if(!confirm('注文履歴を全て削除しますか？'))return;
+  localStorage.removeItem('fish_add_hist_tanto');
+  renderHistory();
+  showToast('削除しました');
+}
+
+/* ─── Utils ─── */
 function pad(n){return n<10?'0'+n:String(n);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function escAttr(s){return s.replace(/\\/g,'\\\\').replace(/'/g,"'");}
-function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2500);}
+function escAttr(s){return s.replace(/\\/g,'\\\\').replace(/'/g,'&#39;');}
+function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},2500);}
+
 init();
 </script>
 </body>
