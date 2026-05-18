@@ -161,6 +161,9 @@ header p{font-size:11px;opacity:.6;margin-top:3px}
     <div class="modal-title">📋 注文内容の確認</div>
     <div class="modal-sub" id="modal-store-label">-</div>
     <div class="modal-list" id="modal-list"></div>
+    <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#92400e;line-height:1.6">
+      ⚠️ ご注文のタイミングによっては、通常より価格が高くなる場合がございます。予めご了承くださいませ。
+    </div>
     <div class="modal-btns">
       <button class="btn-cancel-modal" onclick="closeConfirm()">キャンセル</button>
       <button class="btn-ok-modal" id="modal-ok-btn" onclick="submitOrder()">📤 注文確定</button>
@@ -211,6 +214,20 @@ var KANJI_YOMI = [
   ['豆腐','とうふ'],['蒲鉾','かまぼこ'],['揚','あげ'],['煮','に'],
   ['対馬','つしま'],['天神','てんじん'],['博多','はかた']
 ];
+
+function toHira(s){return s.replace(/[\u30A1-\u30F6]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0x60);});}
+function romaToHira(str){
+  var s=str.toLowerCase(),r='',i=0;
+  while(i<s.length){
+    var f=false;
+    for(var j=0;j<ROMAJI_MAP.length;j++){
+      var rom=ROMAJI_MAP[j][0];
+      if(s.substr(i,rom.length)===rom){r+=ROMAJI_MAP[j][1];i+=rom.length;f=true;break;}
+    }
+    if(!f){r+=s[i];i++;}
+  }
+  return r;
+}
 
 function kanjiToHira(name) {
   var result = name;
