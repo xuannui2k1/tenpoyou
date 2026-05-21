@@ -89,8 +89,16 @@ header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:s
 .btn-pw:active{opacity:.88}
 .pw-error{color:#c62828;font-size:13px;font-weight:700;min-height:20px;margin-top:4px}
 /* 仕入表 extra fields block */
-.shiire-block{background:#fffbeb;border:1.5px solid #fbbf24;border-radius:10px;padding:12px 12px 4px;margin-bottom:12px}
-.shiire-block-title{font-size:10px;font-weight:700;color:#92400e;letter-spacing:.5px;margin-bottom:10px}
+.shiire-block{background:#fffbeb;border:1.5px solid #fbbf24;border-radius:10px;padding:10px 10px 6px;margin-bottom:10px}
+.shiire-block-title{font-size:10px;font-weight:700;color:#92400e;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+/* 担当用 compact grid */
+.admin-top-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.shiire-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.field-sm{display:flex;flex-direction:column;gap:3px}
+.field-sm label{font-size:9px;color:#92400e;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap}
+.field-sm input{padding:8px 8px;border:1.5px solid #fbbf24;border-radius:8px;font-size:16px;font-family:inherit;color:#1a2a3a;font-weight:700;background:#fffef5;text-align:right;width:100%;min-width:0}
+.field-sm input:focus{outline:none;border-color:#d97706;background:white}
+.field-sm .col-badge{font-size:8px;background:#fbbf24;color:#92400e;border-radius:3px;padding:1px 4px;font-weight:900;letter-spacing:.3px;align-self:flex-start;margin-bottom:1px}
 </style>
 </head>
 <body>
@@ -258,8 +266,8 @@ header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:s
     <div class="sec" id="t-input-sec" style="display:none">
       <div class="sel-info" id="t-sel-info">-</div>
       <div class="input-body">
-        <!-- 注文情報 -->
-        <div class="input-row">
+        <!-- 注文数量 + 単位 -->
+        <div class="admin-top-row">
           <div class="field">
             <label>注文数量</label>
             <input type="number" id="t-add-qty" inputmode="decimal" placeholder="0">
@@ -279,26 +287,29 @@ header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:s
             </select>
           </div>
         </div>
-        <!-- 仕入表 入力 (列F・H・I) -->
+        <!-- 仕入表 入力 (列F・H・I) — 3列コンパクト -->
         <div class="shiire-block">
-          <div class="shiire-block-title">📊 仕入表入力（列 F・H・I）</div>
-          <div class="input-row">
-            <div class="field">
-              <label>数量 (F列)</label>
+          <div class="shiire-block-title">📊 仕入表（F・H・I列）</div>
+          <div class="shiire-grid">
+            <div class="field-sm">
+              <span class="col-badge">F列</span>
+              <label>数量</label>
               <input type="number" id="t-add-jissuu" inputmode="decimal" placeholder="0">
             </div>
-            <div class="field">
-              <label>単価 (H列)</label>
+            <div class="field-sm">
+              <span class="col-badge">H列</span>
+              <label>単価</label>
               <input type="number" id="t-add-tanka" inputmode="decimal" placeholder="0">
             </div>
-            <div class="field full">
-              <label>仕入単価 (I列)</label>
+            <div class="field-sm">
+              <span class="col-badge">I列</span>
+              <label>仕入単価</label>
               <input type="number" id="t-add-shiiretanka" inputmode="decimal" placeholder="0">
             </div>
           </div>
         </div>
         <!-- コメント -->
-        <div class="input-row">
+        <div class="input-row" style="margin-bottom:12px">
           <div class="field full">
             <label>コメント（任意）</label>
             <input type="text" id="t-add-comment" placeholder="例: 小さいサイズでお願いします">
