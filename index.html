@@ -111,6 +111,7 @@ header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:s
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-btn-s" onclick="switchTab('s')">🏪 店舗用</button>
     <button class="tab-btn" id="tab-btn-t" onclick="switchTab('t')">👤 担当用</button>
+    <button class="tab-btn" id="tab-btn-h" onclick="switchTab('h')">📋 履歴</button>
   </div>
 </header>
 
@@ -331,15 +332,31 @@ header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:s
       </div>
     </div>
 
-    <!-- ⑤ 注文履歴（担当用のみ表示・操作可） -->
-    <div class="sec" id="t-hist-sec" style="display:none">
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════
+     履歴 TAB
+     誰でも閲覧可能 / 担当(999)のみ削除可
+     タブを開いた時にサーバーから読込（遅延ロード）
+══════════════════════════════════ -->
+<div id="tab-h" class="tab-content">
+  <div class="screen">
+    <div class="sec">
       <div class="sec-head">
         <span>📋 注文履歴</span>
-        <button onclick="clearHistory()" style="font-size:11px;color:#c62828;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">🗑 全削除</button>
+        <button id="h-clear-btn" onclick="clearHistory()" style="display:none;font-size:11px;color:#c62828;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:700">🗑 全削除</button>
       </div>
-      <div class="hist-list" id="t-hist-list"></div>
+      <div id="h-status" style="padding:14px 16px;font-size:13px;color:#7a9ab8">タブを開くと読み込みます…</div>
+      <div class="hist-list" id="h-hist-list"></div>
+      <div style="padding:10px 14px 14px">
+        <button class="btn-add-cart" style="background:#f0f4f9;color:#5a7a9a" onclick="loadHistory()">🔄 再読み込み</button>
+      </div>
     </div>
-
+    <div id="h-lock-note" style="text-align:center;font-size:11px;color:#b0c4d4;padding:0 14px 14px">
+      ※ 削除するには「担当用」タブでログインしてください
+    </div>
   </div>
 </div>
 
@@ -399,6 +416,8 @@ var STORES = [
 
 var FISH_NAMES = [];
 var clockTimer = null;
+var tantoUnlocked = false;   // 担当(999)ログイン済みか
+var histLoadedOnce = false;  // 履歴を一度でも読込んだか（遅延ロード用）
 
 /* Per-tab state */
 var state = {
@@ -443,13 +462,17 @@ function kanjiToHira(name){var r=name;KANJI_YOMI.forEach(function(p){r=r.split(p
 
 /* ─── Tab switching ─── */
 function switchTab(tab) {
-  ['s','t'].forEach(function(k){
+  ['s','t','h'].forEach(function(k){
     document.getElementById('tab-'+k).classList.remove('active');
     document.getElementById('tab-btn-'+k).classList.remove('active');
   });
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('tab-btn-'+tab).classList.add('active');
   if(tab==='s') checkStoreTime();
+  if(tab==='h'){
+    updateHistDeleteBtn();
+    if(!histLoadedOnce) loadHistory();  // 遅延ロード：初回のみ自動
+  }
 }
 
 /* ─── 店舗用: time restriction 0:00~2:00 ─── */
@@ -478,9 +501,10 @@ function startClock(){
 function checkPw(){
   var v=document.getElementById('t-pw-input').value;
   if(v===TANTO_PASSWORD){
+    tantoUnlocked=true;
     document.getElementById('t-lock').style.display='none';
     document.getElementById('t-main').style.display='flex';
-    renderHistory();
+    updateHistDeleteBtn();
   }else{
     document.getElementById('t-pw-error').textContent='パスワードが違います';
     document.getElementById('t-pw-input').value='';
@@ -700,22 +724,28 @@ async function submitOrder(tab){
   }
 
   if(!errors.length){
-    // 担当用のみ履歴を保存
-    if(tab==='t'){
-      var h=JSON.parse(localStorage.getItem('fish_add_hist_tanto')||'[]');
-      var now=new Date();
-      h.unshift({
-        time:pad(now.getHours())+':'+pad(now.getMinutes()),
-        items:cart.map(function(x){return {
-          name:x.fishName, qty:x.qty, unit:x.unit,
-          store:x.store.code+' '+x.store.name,
-          jissuu:x.jissuu, tanka:x.tanka, shiiretanka:x.shiiretanka
-        };})
+    // 店舗用・担当用とも履歴をサーバー(GAS)に保存
+    var now=new Date();
+    var rec={
+      time:pad(now.getHours())+':'+pad(now.getMinutes()),
+      date:now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate()),
+      src:(tab==='s'?'店舗':'担当'),
+      items:cart.map(function(x){return {
+        name:x.fishName, qty:x.qty, unit:x.unit,
+        store:x.store.code+' '+x.store.name,
+        jissuu:x.jissuu, tanka:x.tanka, shiiretanka:x.shiiretanka
+      };})
+    };
+    // サーバー保存
+    try{
+      await fetch(GAS_URL,{
+        method:'POST',
+        body:JSON.stringify({action:'saveHistory',sheetId:SHEET_ID,record:rec}),
+        headers:{'Content-Type':'text/plain'}
       });
-      if(h.length>20)h=h.slice(0,20);
-      localStorage.setItem('fish_add_hist_tanto',JSON.stringify(h));
-      renderHistory();
-    }
+    }catch(e){/* 通信失敗時は次回履歴タブで再取得 */}
+    // 次に履歴タブを開いた時に再読込させる
+    histLoadedOnce=false;
     state[tab].cart=[];
     renderCart(tab);
     closeConfirm(tab);
@@ -729,13 +759,42 @@ async function submitOrder(tab){
   }
 }
 
-/* ─── History（担当用のみ） ─── */
-function renderHistory(){
-  var h=JSON.parse(localStorage.getItem('fish_add_hist_tanto')||'[]');
-  var sec=document.getElementById('t-hist-sec');
-  if(!h.length){sec.style.display='none';return;}
-  sec.style.display='block';
-  document.getElementById('t-hist-list').innerHTML=h.map(function(rec){
+/* ─── History（履歴タブ：サーバー取得・遅延ロード） ─── */
+async function loadHistory(){
+  var status=document.getElementById('h-status');
+  var list=document.getElementById('h-hist-list');
+  status.style.display='block';
+  status.textContent='読み込み中…';
+  status.style.color='#7a9ab8';
+  list.innerHTML='';
+  try{
+    var res=await fetch(GAS_URL+'?action=getHistory&sheetId='+encodeURIComponent(SHEET_ID));
+    var j=await res.json();
+    if(j.success&&Array.isArray(j.history)){
+      histLoadedOnce=true;
+      renderHistory(j.history);
+    }else{
+      status.textContent='エラー: '+(j.error||'読み込み失敗');
+      status.style.color='#c62828';
+    }
+  }catch(e){
+    status.textContent='通信エラー — 再読み込みしてください';
+    status.style.color='#c62828';
+  }
+}
+
+function renderHistory(h){
+  var status=document.getElementById('h-status');
+  var list=document.getElementById('h-hist-list');
+  if(!h||!h.length){
+    status.style.display='block';
+    status.textContent='履歴はまだありません';
+    status.style.color='#7a9ab8';
+    list.innerHTML='';
+    return;
+  }
+  status.style.display='none';
+  list.innerHTML=h.map(function(rec){
     var rows=(rec.items||[]).map(function(x){
       var shiire=x.jissuu
         ?'<div style="font-size:10px;color:#92400e;margin-bottom:3px">F:'+esc(x.jissuu)+'　H:'+esc(x.tanka)+'　I:'+esc(x.shiiretanka)+'</div>'
@@ -744,15 +803,38 @@ function renderHistory(){
         '<span>'+esc(x.name)+(x.store?' <span style="font-size:10px;color:#aaa">'+esc(x.store)+'</span>':'')+'</span>'+
         '<span style="font-weight:900">'+esc(x.qty)+' '+esc(x.unit)+'</span></div>'+shiire;
     }).join('');
-    return '<div class="hist-item"><div class="hist-badge">'+esc(rec.time)+'</div>'+rows+'</div>';
+    var when=(rec.date?esc(rec.date)+' ':'')+esc(rec.time||'');
+    return '<div class="hist-item"><div class="hist-badge">'+when+(rec.src?' · '+esc(rec.src):'')+'</div>'+rows+'</div>';
   }).join('');
 }
 
-function clearHistory(){
+/* 削除ボタンの表示制御（担当ログイン時のみ） */
+function updateHistDeleteBtn(){
+  var btn=document.getElementById('h-clear-btn');
+  var note=document.getElementById('h-lock-note');
+  if(btn) btn.style.display = tantoUnlocked ? 'inline-block' : 'none';
+  if(note) note.style.display = tantoUnlocked ? 'none' : 'block';
+}
+
+async function clearHistory(){
+  if(!tantoUnlocked){showToast('担当用ログインが必要です');return;}
   if(!confirm('注文履歴を全て削除しますか？'))return;
-  localStorage.removeItem('fish_add_hist_tanto');
-  renderHistory();
-  showToast('削除しました');
+  try{
+    var res=await fetch(GAS_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'clearHistory',sheetId:SHEET_ID}),
+      headers:{'Content-Type':'text/plain'}
+    });
+    var j=await res.json();
+    if(j.success){
+      renderHistory([]);
+      showToast('削除しました');
+    }else{
+      showToast('削除に失敗しました');
+    }
+  }catch(e){
+    showToast('通信エラー');
+  }
 }
 
 /* ─── Utils ─── */
