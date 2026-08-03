@@ -541,27 +541,50 @@ function checkPw(){
 }
 
 /* ─── Init ─── */
+var FISH_CACHE_KEY='fish_names_cache_v1';
+
+function setFishStatus(txt){
+  document.getElementById('s-fish-status').textContent=txt;
+  document.getElementById('t-fish-status').textContent=txt;
+}
+
 async function init(){
   renderStoreDropdown('s');
   renderStoreDropdown('t');
   checkStoreTime();
+
+  // 1) キャッシュがあれば即表示（体感速度↑）。裏で最新を取得して更新。
   try{
-    var res=await fetch(GAS_URL+'?action=getMaster');
+    var cached=localStorage.getItem(FISH_CACHE_KEY);
+    if(cached){
+      var arr=JSON.parse(cached);
+      if(Array.isArray(arr)&&arr.length){
+        FISH_NAMES=arr;
+        setFishStatus(FISH_NAMES.length+'種類の魚が検索可能です（更新中…）');
+      }
+    }
+  }catch(e){}
+
+  // 2) サーバーから最新の魚名リストを取得（タイムアウト付き）
+  try{
+    var res=await fetchWithTimeout(GAS_URL+'?action=getMaster', {}, 15000);
     var j=await res.json();
     if(j.success&&j.fishNames){
       FISH_NAMES=j.fishNames;
-      var txt=FISH_NAMES.length+'種類の魚が検索可能です';
-      document.getElementById('s-fish-status').textContent=txt;
-      document.getElementById('t-fish-status').textContent=txt;
+      setFishStatus(FISH_NAMES.length+'種類の魚が検索可能です');
+      try{ localStorage.setItem(FISH_CACHE_KEY, JSON.stringify(FISH_NAMES)); }catch(e){}
+    }else if(!FISH_NAMES.length){
+      setFishStatus('エラー: '+(j.error||'不明'));
     }else{
-      var err='エラー: '+(j.error||'不明');
-      document.getElementById('s-fish-status').textContent=err;
-      document.getElementById('t-fish-status').textContent=err;
+      setFishStatus(FISH_NAMES.length+'種類の魚が検索可能です');
     }
   }catch(e){
-    var msg='通信エラー — リロードしてください';
-    document.getElementById('s-fish-status').textContent=msg;
-    document.getElementById('t-fish-status').textContent=msg;
+    // 通信失敗でもキャッシュがあれば検索は使える
+    if(FISH_NAMES.length){
+      setFishStatus(FISH_NAMES.length+'種類の魚が検索可能です（オフライン表示）');
+    }else{
+      setFishStatus('通信エラー — リロードしてください');
+    }
   }
 }
 
@@ -707,83 +730,118 @@ function openConfirm(tab){
 
 function closeConfirm(tab){document.getElementById(tab+'-confirm-modal').classList.remove('show');}
 
-/* ─── Submit ─── */
+/* ─── fetch にタイムアウト＋リトライを付与 ───
+   GAS はレスポンス時に script.googleusercontent.com へ 302 する。
+   モバイル/低速回線ではこのリダイレクト読取だけが失敗し、
+   「シートには書けているのに res.json() で例外」→ 誤エラーになりやすい。
+   ここでタイムアウトと1回リトライを挟み、body が読めなくても
+   ネットワーク層が成功していれば成功扱いにする。 */
+function fetchWithTimeout(url, opts, ms){
+  ms = ms || 20000;
+  return new Promise(function(resolve, reject){
+    var ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+    var to = setTimeout(function(){ if(ctrl) ctrl.abort(); reject(new Error('timeout')); }, ms);
+    var o = Object.assign({}, opts||{});
+    if(ctrl) o.signal = ctrl.signal;
+    fetch(url, o).then(function(r){ clearTimeout(to); resolve(r); },
+                       function(e){ clearTimeout(to); reject(e); });
+  });
+}
+
+/* POST を送り、成功可否を返す。
+   戻り値: {ok:true, body:{...}} または {ok:false, error:'...'}
+   ・HTTP 200 かつ JSON success:true → 成功
+   ・JSON が読めない/success未定義でも HTTP 200 なら「書込は成功」とみなす
+     （GAS リダイレクト読取失敗の誤エラーを防ぐ）*/
+async function postGAS(payload, tries){
+  tries = tries || 2;
+  var lastErr = '';
+  for(var t=0; t<tries; t++){
+    try{
+      var res = await fetchWithTimeout(GAS_URL, {
+        method:'POST',
+        body:JSON.stringify(payload),
+        headers:{'Content-Type':'text/plain'},
+        redirect:'follow'
+      }, 20000);
+      if(!res.ok){ lastErr='HTTP '+res.status; continue; }
+      var txt='';
+      try{ txt = await res.text(); }catch(e){ txt=''; }
+      if(!txt){
+        // 本文は読めなかったが HTTP は成功 → 書込成功とみなす
+        return {ok:true, body:{success:true, _assumed:true}};
+      }
+      var j;
+      try{ j = JSON.parse(txt); }
+      catch(e){ return {ok:true, body:{success:true, _assumed:true}}; }
+      if(j && j.success) return {ok:true, body:j};
+      return {ok:false, error:(j && j.error) || 'サーバーエラー'};
+    }catch(e){
+      lastErr = (e && e.message) || String(e);
+      // timeout / network → 少し待ってリトライ
+      await new Promise(function(r){ setTimeout(r, 600); });
+    }
+  }
+  return {ok:false, error:lastErr||'通信エラー'};
+}
+
+/* ─── Submit（カート全件を1リクエストで送信） ─── */
 async function submitOrder(tab){
   var btn=document.getElementById(tab+'-modal-ok-btn');
   var msg=document.getElementById(tab+'-modal-msg');
   var cart=state[tab].cart;
-  btn.disabled=true; btn.textContent='送信中...'; msg.textContent='';
-  var errors=[];
+  if(!cart.length){ showToast('注文リストが空です'); return; }
 
-  for(var i=0;i<cart.length;i++){
-    var item=cart[i];
-    try{
-      // 1) addNewOrder → 元のスプレッドシート（両タブ共通）
-      var res=await fetch(GAS_URL,{
-        method:'POST',
-        body:JSON.stringify({action:'addNewOrder',sheetId:SHEET_ID,
-          custCode:item.store.code,custName:item.store.name,
-          fishName:item.fishName,qty:item.qty,unit:item.unit,
-          comment:item.comment?('['+item.fishName+']'+item.comment):null}),
-        headers:{'Content-Type':'text/plain'}
-      });
-      var j=await res.json();
-      if(!j.success){errors.push(item.fishName);continue;}
+  btn.disabled=true; btn.textContent='送信中...';
+  msg.style.color='#7a9ab8'; msg.textContent='送信しています…';
 
-      // 2) addShiireHyo → 仕入表（担当用のみ）
+  var now=new Date();
+  var rec={
+    time:pad(now.getHours())+':'+pad(now.getMinutes()),
+    date:now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate()),
+    src:(tab==='s'?'店舗':'担当'),
+    items:cart.map(function(x){return {
+      name:x.fishName, qty:x.qty, unit:x.unit, comment:x.comment||'',
+      store:x.store.code+' '+x.store.name,
+      jissuu:x.jissuu, tanka:x.tanka, shiiretanka:x.shiiretanka
+    };})
+  };
+
+  var payload={
+    action:'submitBatch',
+    tab:tab,
+    shiireSheetId:SHIIRE_SHEET_ID,
+    items:cart.map(function(x){
+      var it={
+        custCode:x.store.code, custName:x.store.name,
+        fishName:x.fishName, qty:x.qty, unit:x.unit,
+        comment:x.comment||''
+      };
       if(tab==='t'){
-        // 列Iが未入力の場合はpayloadから除外し、シート側の計算式を保持
-        var shiirePayload={action:'addShiireHyo',
-          shiireSheetId:SHIIRE_SHEET_ID,
-          custCode:item.store.code, custName:item.store.name,
-          fishName:item.fishName,
-          jissuu:item.jissuu, tanka:item.tanka};
-        if(item.shiiretanka!=='' && item.shiiretanka!=null){
-          shiirePayload.shiiretanka=item.shiiretanka;
-        }
-        var res2=await fetch(GAS_URL,{
-          method:'POST',
-          body:JSON.stringify(shiirePayload),
-          headers:{'Content-Type':'text/plain'}
-        });
-        var j2=await res2.json();
-        if(!j2.success){errors.push(item.fishName+'(仕入表)');continue;}
+        it.jissuu=x.jissuu; it.tanka=x.tanka;
+        if(x.shiiretanka!=='' && x.shiiretanka!=null) it.shiiretanka=x.shiiretanka;
       }
-    }catch(e){errors.push(item.fishName);}
-  }
+      return it;
+    }),
+    record:rec
+  };
 
-  if(!errors.length){
-    // 店舗用・担当用とも履歴をサーバー(GAS)に保存
-    var now=new Date();
-    var rec={
-      time:pad(now.getHours())+':'+pad(now.getMinutes()),
-      date:now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate()),
-      src:(tab==='s'?'店舗':'担当'),
-      items:cart.map(function(x){return {
-        name:x.fishName, qty:x.qty, unit:x.unit, comment:x.comment||'',
-        store:x.store.code+' '+x.store.name,
-        jissuu:x.jissuu, tanka:x.tanka, shiiretanka:x.shiiretanka
-      };})
-    };
-    // サーバー保存
-    try{
-      await fetch(GAS_URL,{
-        method:'POST',
-        body:JSON.stringify({action:'saveHistory',sheetId:SHEET_ID,record:rec}),
-        headers:{'Content-Type':'text/plain'}
-      });
-    }catch(e){/* 通信失敗時は次回履歴タブで再取得 */}
-    // 次に履歴タブを開いた時に再読込させる
+  var r = await postGAS(payload, 2);
+
+  if(r.ok){
+    // 部分エラー（仕入表・履歴の一部失敗）は警告のみ。主要書込は成功。
+    var warn = (r.body && r.body.errors && r.body.errors.length)
+                 ? r.body.errors.join(', ') : '';
     histLoadedOnce=false;
     state[tab].cart=[];
     renderCart(tab);
     closeConfirm(tab);
     document.getElementById(tab+'-store-select').value='';
     state[tab].store=null; state[tab].fish=null;
-    showToast('注文を送信しました ✓');
+    showToast(warn ? ('送信完了（一部注意: '+warn+'）') : '注文を送信しました ✓');
   }else{
-    msg.textContent='エラー: '+errors.join(', ')+'の送信に失敗しました';
     msg.style.color='#c62828';
+    msg.textContent='送信に失敗しました: '+r.error+' — もう一度お試しください';
     btn.disabled=false; btn.textContent='📤 注文確定';
   }
 }
@@ -924,21 +982,12 @@ function updateHistDeleteBtn(){
 async function clearHistory(){
   if(!tantoUnlocked){showToast('担当用ログインが必要です');return;}
   if(!confirm('注文履歴を全て削除しますか？'))return;
-  try{
-    var res=await fetch(GAS_URL,{
-      method:'POST',
-      body:JSON.stringify({action:'clearHistory',sheetId:SHEET_ID}),
-      headers:{'Content-Type':'text/plain'}
-    });
-    var j=await res.json();
-    if(j.success){
-      renderHistory([]);
-      showToast('削除しました');
-    }else{
-      showToast('削除に失敗しました');
-    }
-  }catch(e){
-    showToast('通信エラー');
+  var r=await postGAS({action:'clearHistory',sheetId:SHEET_ID}, 2);
+  if(r.ok){
+    renderHistory([]);
+    showToast('削除しました');
+  }else{
+    showToast('削除に失敗しました: '+r.error);
   }
 }
 
