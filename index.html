@@ -122,6 +122,8 @@ header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:s
 .field-sm input{padding:8px 8px;border:1.5px solid #fbbf24;border-radius:8px;font-size:16px;font-family:inherit;color:#1a2a3a;font-weight:700;background:#fffef5;text-align:right;width:100%;min-width:0}
 .field-sm input:focus{outline:none;border-color:#d97706;background:white}
 .field-sm .col-badge{font-size:8px;background:#fbbf24;color:#92400e;border-radius:3px;padding:1px 4px;font-weight:900;letter-spacing:.3px;align-self:flex-start;margin-bottom:1px}
+/* ログアウトリンク（担当用ヘッダー内） */
+.tanto-logout{font-size:10px;color:#7a9ab8;text-align:right;padding:6px 16px 0;cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -131,6 +133,9 @@ header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:s
     <h1>📝 追加注文入力</h1>
     <p>手動で注文を追加します</p>
   </div>
+  <!-- タブ順序は元のまま（店舗用・担当用・履歴）。
+       未ログイン端末はこの並びのまま。
+       ログイン済み端末のみ、JS(restoreTantoUnlock)が担当用を先頭へ動的に移動する。 -->
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-btn-s" onclick="switchTab('s')">🏪 店舗用</button>
     <button class="tab-btn" id="tab-btn-t" onclick="switchTab('t')">👤 担当用</button>
@@ -235,7 +240,7 @@ header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:s
 
 <!-- ══════════════════════════════════
      担当用 TAB
-     パスワード: 999
+     パスワード: 999（端末に記憶）
      いつでも利用可能
      履歴機能: あり
 ══════════════════════════════════ -->
@@ -261,6 +266,9 @@ header{background:linear-gradient(135deg,#1a3a5c,#1e4d7b);color:white;position:s
 
   <!-- メイン（ロック解除後） -->
   <div id="t-main" class="screen" style="display:none">
+
+    <!-- ★追加: この端末のログアウトリンク -->
+    <div class="tanto-logout" onclick="logoutTanto()">🔒 この端末の担当ログインを解除</div>
 
     <!-- ① 店舗選択 -->
     <div class="sec">
@@ -431,6 +439,7 @@ var GAS_URL         = 'https://script.google.com/macros/s/AKfycbwn0OmNmwvfoOrI5-
 var SHEET_ID        = '1D1b7d6MKMO1dXkYJvDlJKPZq7Gt3zQrjFAzp7ro22Uw';
 var SHIIRE_SHEET_ID = '1mXrNddkibkMpUBcof-vhPNTzahO3Y456Ejh6obNU9zw';
 var TANTO_PASSWORD  = '999';
+var TANTO_LS_KEY    = 'tanto_unlocked_v1';   // ★追加: 端末記憶用キー
 
 var STORES = [
   {code:2,name:'大晴海'},{code:3,name:'海の路'},{code:4,name:'板付製造'},
@@ -530,6 +539,7 @@ function checkPw(){
   var v=document.getElementById('t-pw-input').value;
   if(v===TANTO_PASSWORD){
     tantoUnlocked=true;
+    try{ localStorage.setItem(TANTO_LS_KEY,'1'); }catch(e){}   // ★追加: 端末に記憶
     document.getElementById('t-lock').style.display='none';
     document.getElementById('t-main').style.display='flex';
     updateHistDeleteBtn();
@@ -538,6 +548,54 @@ function checkPw(){
     document.getElementById('t-pw-input').value='';
     setTimeout(function(){document.getElementById('t-pw-error').textContent='';},2000);
   }
+}
+
+/* ★追加: 端末に保存済みなら自動ログイン＋担当用タブを先頭へ。
+   未保存(未ログイン)の端末はタブ順序・初期表示とも従来通り
+   （店舗用が先頭、担当用は中央のまま、パスワード画面が表示される）。 */
+function restoreTantoUnlock(){
+  try{
+    if(localStorage.getItem(TANTO_LS_KEY)==='1'){
+      tantoUnlocked=true;
+      document.getElementById('t-lock').style.display='none';
+      document.getElementById('t-main').style.display='flex';
+      moveTantoTabFirst_();
+      switchTab('t');
+    }
+  }catch(e){}
+}
+
+/* 担当用タブボタンをタブバーの先頭へ移動（ログイン済み端末のみ呼ばれる） */
+function moveTantoTabFirst_(){
+  var bar = document.querySelector('.tab-bar');
+  var btnT = document.getElementById('tab-btn-t');
+  if(bar && btnT && bar.firstElementChild !== btnT){
+    bar.insertBefore(btnT, bar.firstElementChild);
+  }
+}
+
+/* 担当用タブボタンを元の位置（店舗用の直後＝中央）へ戻す */
+function moveTantoTabMiddle_(){
+  var bar = document.querySelector('.tab-bar');
+  var btnS = document.getElementById('tab-btn-s');
+  var btnT = document.getElementById('tab-btn-t');
+  if(bar && btnS && btnT){
+    bar.insertBefore(btnT, btnS.nextSibling);
+  }
+}
+
+/* ★追加: この端末の担当ログインを解除（共用端末向け）
+   解除すると担当用タブも元の中央位置に戻り、店舗用タブが表示される。 */
+function logoutTanto(){
+  if(!confirm('この端末の担当ログインを解除しますか？\n次回からパスワード入力が必要になります。')) return;
+  try{ localStorage.removeItem(TANTO_LS_KEY); }catch(e){}
+  tantoUnlocked=false;
+  document.getElementById('t-main').style.display='none';
+  document.getElementById('t-lock').style.display='block';
+  document.getElementById('t-pw-input').value='';
+  updateHistDeleteBtn();
+  moveTantoTabMiddle_();
+  switchTab('s');
 }
 
 /* ─── Init ─── */
@@ -549,6 +607,7 @@ function setFishStatus(txt){
 }
 
 async function init(){
+  restoreTantoUnlock();          // ★追加: 一番最初に呼ぶ（記憶済みなら即ログイン状態に）
   renderStoreDropdown('s');
   renderStoreDropdown('t');
   checkStoreTime();
@@ -735,7 +794,9 @@ function closeConfirm(tab){document.getElementById(tab+'-confirm-modal').classLi
    モバイル/低速回線ではこのリダイレクト読取だけが失敗し、
    「シートには書けているのに res.json() で例外」→ 誤エラーになりやすい。
    ここでタイムアウトと1回リトライを挟み、body が読めなくても
-   ネットワーク層が成功していれば成功扱いにする。 */
+   ネットワーク層が成功していれば成功扱いにする。
+   ★注意: リトライ時は submitOrder() 側で生成した同一 requestId を
+   使い回すことで、GAS側のキャッシュチェックにより重複書込を防止している。 */
 function fetchWithTimeout(url, opts, ms){
   ms = ms || 20000;
   return new Promise(function(resolve, reject){
@@ -778,7 +839,7 @@ async function postGAS(payload, tries){
       return {ok:false, error:(j && j.error) || 'サーバーエラー'};
     }catch(e){
       lastErr = (e && e.message) || String(e);
-      // timeout / network → 少し待ってリトライ
+      // timeout / network → 少し待ってリトライ（同一payload = 同一requestIdなのでGAS側で重複防止される）
       await new Promise(function(r){ setTimeout(r, 600); });
     }
   }
@@ -807,8 +868,12 @@ async function submitOrder(tab){
     };})
   };
 
+  // ★追加: このsubmitOrder呼び出し全体（リトライ含む）で使い回す一意なID
+  var requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+
   var payload={
     action:'submitBatch',
+    requestId:requestId,   // ★追加
     tab:tab,
     shiireSheetId:SHIIRE_SHEET_ID,
     items:cart.map(function(x){
